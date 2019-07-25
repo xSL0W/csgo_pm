@@ -10,7 +10,7 @@ public Plugin myinfo =
 	name = "PM",
 	author = "xSLOW",
 	description = "Send a private message to a player",
-	version = "1.0"
+	version = "1.1"
 };
 
 bool g_IsPMon[MAXPLAYERS + 1];
