@@ -1,5 +1,6 @@
 #include <sourcemod>
 #include <clientprefs>
+#include <basecomm>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -13,6 +14,8 @@ public Plugin myinfo =
 };
 
 bool g_IsPMon[MAXPLAYERS + 1];
+char LogsPath[64];
+
 Handle g_PM_Cookie;
 
 public void OnPluginStart()
@@ -22,6 +25,8 @@ public void OnPluginStart()
     RegConsoleCmd("sm_pm", Command_SendPM);
     RegConsoleCmd("sm_pmon", Command_PMon);
     RegConsoleCmd("sm_pmoff", Command_PMoff);
+
+    BuildPath(Path_SM, LogsPath, sizeof(LogsPath), "logs/pm.txt");
 
     g_PM_Cookie = RegClientCookie("PM On/Off", "PM On/Off", CookieAccess_Protected);
 }
@@ -58,13 +63,15 @@ public Action Command_SendPM(int client, int args)
 		return Plugin_Handled;
 	}
 
-    char ClientName[32], TargetName[32], iTarget[64], Message[200];
+    char ClientName[32], TargetName[32], iTarget[64], Message[256], TargetSTEAM[32], ClientSTEAM[32], PmLogMessage[256], PmLogTime[512];
 
     GetCmdArg(1, iTarget, sizeof(iTarget));
     GetCmdArg(2, Message, sizeof(Message));
 
-    int Target = FindTarget(client, iTarget, true, false);
+    int Target = FindTarget(client, iTarget, false, false);
 
+    if(Target == -1)
+        return Plugin_Handled;
 
     if(g_IsPMon[client] == false || g_IsPMon[Target] == false) 
 	{
@@ -77,20 +84,28 @@ public Action Command_SendPM(int client, int args)
 		ReplyToCommand( client, " \x03[PM System]: \x07You can\'t send yourself a message!" );
 		return Plugin_Handled;
     }
-
-    if(Target == -1)
-        return Plugin_Handled;
     
-    if(IsClientValid(Target))
+    if(IsClientValid(Target) && !BaseComm_IsClientGagged(client))
     {
         GetClientName(Target, TargetName, sizeof(TargetName));
         GetClientName(client, ClientName, sizeof(ClientName));
-        GetCmdArgString(Message, sizeof(Message));
+        FormatTime(PmLogTime, sizeof(PmLogTime), "%d/%m/%y - %H:%M:%S", GetTime());
+        GetClientAuthId(client, AuthId_Steam2, ClientSTEAM, sizeof(ClientSTEAM));
+        GetClientAuthId(Target, AuthId_Steam2, TargetSTEAM, sizeof(TargetSTEAM));
 
+        GetCmdArgString(Message, sizeof(Message));
         ReplaceStringEx(Message, sizeof(Message), iTarget, "", -1, -1, true);
 
         PrintToChat(Target, " \x03[PM from \x04%s\x03]: \x01%s", ClientName, Message);
         PrintToChat(client, " \x03[PM to \x04%s\x03]: \x01%s", TargetName, Message);
+
+        Format(PmLogMessage, sizeof(PmLogMessage), "[%s] %s[%s] TO %s[%s]:%s", PmLogTime, ClientName, ClientSTEAM, TargetName, TargetSTEAM, Message);
+
+        Handle FileHandle = OpenFile(LogsPath, "a+");
+        WriteFileLine(FileHandle, "%s", PmLogMessage);
+        CloseHandle(FileHandle);
+
+        return Plugin_Handled;
     }
 
     return Plugin_Handled;
