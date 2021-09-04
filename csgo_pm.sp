@@ -10,13 +10,15 @@ public Plugin myinfo =
 	name = "PM",
 	author = "xSLOW",
 	description = "Send a private message to a player",
-	version = "1.1"
+	version = "1.2"
 };
 
 bool g_IsPMon[MAXPLAYERS + 1];
 char LogsPath[64];
 
 Handle g_PM_Cookie;
+
+ConVar g_cvAdminView;
 
 public void OnPluginStart()
 {
@@ -29,6 +31,10 @@ public void OnPluginStart()
     BuildPath(Path_SM, LogsPath, sizeof(LogsPath), "logs/pm.txt");
 
     g_PM_Cookie = RegClientCookie("PM On/Off", "PM On/Off", CookieAccess_Protected);
+    
+    g_cvAdminView = CreateConVar("sm_pm_admin_view", "1.0", "Can admins see the messages between players?", _, true, 0.0, true, 1.0);
+    
+    AutoExecConfig(true);
 }
 
 
@@ -98,6 +104,11 @@ public Action Command_SendPM(int client, int args)
 
         PrintToChat(Target, " \x03[PM from \x04%s\x03]: \x01%s", ClientName, Message);
         PrintToChat(client, " \x03[PM to \x04%s\x03]: \x01%s", TargetName, Message);
+        
+        if(g_cvAdminView.IntValue == 1)
+        {
+        	PrintToAdmins(Target, client, Message);	
+        }
 
         Format(PmLogMessage, sizeof(PmLogMessage), "[%s] %s[%s] TO %s[%s]:%s", PmLogTime, ClientName, ClientSTEAM, TargetName, TargetSTEAM, Message);
 
@@ -111,11 +122,20 @@ public Action Command_SendPM(int client, int args)
     return Plugin_Handled;
 }
 
-
-
 stock bool IsClientValid(int client)
 {
     if (client >= 1 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && !IsFakeClient(client))
         return true;
     return false;
+}
+
+void PrintToAdmins(int iTarget, int iClient, const char[] sMessage)
+{
+	for(int iAdmin = 1; iAdmin <= MaxClients; iClient++)
+	{
+		if(IsClientValid(iAdmin) && GetUserFlagBits(iAdmin) != 0)
+		{
+			PrintToChat(iAdmin, " \x03[PM System]:\x07 %N\x01 to\x04 %N\x01:\x10 \"%s\".", iClient, iTarget, sMessage);
+		}
+	}
 }
