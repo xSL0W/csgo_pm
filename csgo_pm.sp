@@ -32,7 +32,7 @@ public void OnPluginStart()
 
     g_PM_Cookie = RegClientCookie("PM On/Off", "PM On/Off", CookieAccess_Protected);
     
-    g_cvAdminView = CreateConVar("sm_pm_admin_view", "1.0", "Can admins see the messages between players?", _, true, 0.0, true, 1.0);
+    g_cvAdminView = CreateConVar("sm_pm_admin_view", "0.0", "Can admins see the messages between players?", _, true, 0.0, true, 1.0);
     
     AutoExecConfig(true);
 }
@@ -131,11 +131,11 @@ stock bool IsClientValid(int client)
 
 void PrintToAdmins(int iTarget, int iClient, const char[] sMessage)
 {
-	for(int iAdmin = 1; iAdmin <= MaxClients; iClient++)
+	for(int iClient = 1; iClient <= MaxClients; iClient++)
 	{
-		if(IsClientValid(iAdmin) && GetUserFlagBits(iAdmin) != 0)
+		if(IsClientValid(iClient) && GetUserFlagBits(iClient) != 0)
 		{
-			PrintToChat(iAdmin, " \x03[PM System]:\x07 %N\x01 to\x04 %N\x01:\x10 \"%s\".", iClient, iTarget, sMessage);
+			PrintToChat(iClient, " \x03[PM System]:\x07 %N\x01 to\x04 %N\x01:\x10 \"%s\".", iClient, iTarget, sMessage);
 		}
 	}
 }
