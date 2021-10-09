@@ -10,7 +10,7 @@ public Plugin myinfo =
 	name = "PM",
 	author = "xSLOW",
 	description = "Send a private message to a player",
-	version = "1.2fix"
+	version = "1.2.2"
 };
 
 bool g_IsPMon[MAXPLAYERS + 1];
@@ -133,7 +133,7 @@ void PrintToAdmins(int iTarget, int iClient, const char[] sMessage)
 {
 	for(int iAdmin = 1; iAdmin <= MaxClients; iAdmin++)
 	{
-		if(IsClientValid(iAdmin) && GetUserFlagBits(iAdmin) != 0)
+		if(IsClientValid(iAdmin) && GetAdminFlag(GetUserAdmin(iAdmin), Admin_Kick))
 		{
 			PrintToChat(iAdmin, " \x03[PM System]:\x07 %N\x01 to\x04 %N\x01:\x10 \"%s\".", iClient, iTarget, sMessage);
 		}
